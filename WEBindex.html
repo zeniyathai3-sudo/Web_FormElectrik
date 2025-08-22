@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Form Electricity, CW, NG.</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f9fafb;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px;
+      text-align: center;
+      min-width: 80px;
+    }
+    th {
+      background: #2563eb;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    td:first-child {
+      background: #f1f5f9;
+      font-weight: bold;
+    }
+    input {
+      width: 70px;
+      padding: 4px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      text-align: center;
+    }
+    button {
+      margin: 10px 5px 0 0;
+      padding: 10px 15px;
+      border: none;
+      background: #16a34a;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #15803d;
+    }
+    .btn-secondary {
+      background: #2563eb;
+    }
+    .btn-secondary:hover {
+      background: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+  <h2>📊 Form Electricity, CW, NG.</h2>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Day</th>
+        <!-- หัวข้อแนวนอน -->
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <button onclick="saveData()">💾 บันทึกข้อมูล</button>
+  <button class="btn-secondary" onclick="downloadCSV()">⬇️ ดาวน์โหลด CSV</button>
+  <button class="btn-secondary" onclick="downloadJSON()">⬇️ ดาวน์โหลด JSON</button>
+
+  <script>
+    const topics = [
+      "mdb1","mdb2","mdb3","lp-of","lp-g","pac-of","lp-f1","p1","p2","p3",
+      "lp-f2","pac-f2","c-1","c-2","c-3","g-1","spare","s-scrub","p-di",
+      "anodizing-1","anodizing-2","wasteplant","pac-f1","a-1","p-compressure",
+      "pac-f3","m1","buoy"
+    ];
+
+    const theadRow = document.querySelector("#dataTable thead tr");
+    const tableBody = document.getElementById("tableBody");
+
+    // สร้างหัวข้อแนวนอน
+    topics.forEach(topic => {
+      const th = document.createElement("th");
+      th.textContent = topic;
+      theadRow.appendChild(th);
+    });
+
+    // สร้างแถววันที่ (Day 1-30)
+    for (let day = 1; day <= 30; day++) {
+      const row = document.createElement("tr");
+      let cells = `<td>Day ${day}</td>`;
+      topics.forEach(topic => {
+        const id = `${topic}-day${day}`;
+        cells += `<td><input id="${id}" type="text"></td>`;
+      });
+      row.innerHTML = cells;
+      tableBody.appendChild(row);
+    }
+
+    // โหลดข้อมูลที่เคยบันทึก
+    window.onload = () => {
+      const saved = JSON.parse(localStorage.getItem("dailyData")) || {};
+      for (let topic of topics) {
+        for (let day = 1; day <= 30; day++) {
+          const id = `${topic}-day${day}`;
+          if (saved[id]) document.getElementById(id).value = saved[id];
+        }
+      }
+    };
+
+    // บันทึกข้อมูลลง localStorage
+    function saveData() {
+      const data = {};
+      for (let topic of topics) {
+        for (let day = 1; day <= 30; day++) {
+          const id = `${topic}-day${day}`;
+          data[id] = document.getElementById(id).value;
+        }
+      }
+      localStorage.setItem("dailyData", JSON.stringify(data));
+      alert("✅ ข้อมูลถูกบันทึกแล้ว!");
+    }
+
+    // สร้างไฟล์ CSV
+    function downloadCSV() {
+      let csv = "Day," + topics.join(",") + "\n";
+      for (let day = 1; day <= 30; day++) {
+        let row = [`Day ${day}`];
+        topics.forEach(topic => {
+          const id = `${topic}-day${day}`;
+          row.push(document.getElementById(id).value);
+        });
+        csv += row.join(",") + "\n";
+      }
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "form_data.csv";
+      link.click();
+    }
+
+    // สร้างไฟล์ JSON
+    function downloadJSON() {
+      const data = {};
+      for (let day = 1; day <= 30; day++) {
+        data[`Day ${day}`] = {};
+        topics.forEach(topic => {
+          const id = `${topic}-day${day}`;
+          data[`Day ${day}`][topic] = document.getElementById(id).value;
+        });
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "form_data.json";
+      link.click();
+    }
+  </script>
+</body>
+</html>
